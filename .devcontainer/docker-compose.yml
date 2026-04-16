@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm
+    volumes:
+      - ..:/workspaces/tyba-backend-engineer-test:cached
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgres://postgres:devpass@postgres:5432/api_db
+      DB_HOST: postgres
+      DB_PORT: '5432'
+      DB_USERNAME: postgres
+      DB_PASSWORD: devpass
+      DB_NAME: api_db
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tyba-network
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: api_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d api_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - tyba-network
+
+volumes:
+  postgres_data:
+
+networks:
+  tyba-network:
+    driver: bridge
